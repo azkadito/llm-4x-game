@@ -4,7 +4,7 @@ A* Pathfinding implementation for hex grid.
 
 from typing import Dict, List, Set, Tuple, Optional, Callable
 import heapq
-from .hex_grid import HexCell, TerrainType
+from .types import HexCell
 
 class PathNode:
     """Node used in pathfinding."""
