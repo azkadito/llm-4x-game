@@ -14,24 +14,27 @@ class PathNode:
         self.g_cost = g_cost  # Cost from start
         self.h_cost = h_cost  # Heuristic cost to end
         self.parent = parent
+        self._queue_key = (self.g_cost + self.h_cost, self.g_cost, id(self))
+        self._in_queue = False
         
     @property
     def f_cost(self) -> float:
         """Total estimated cost (g_cost + h_cost)."""
         return self.g_cost + self.h_cost
     
+    def update(self, g_cost: float, parent: Optional['PathNode']):
+        """Update node with new cost and parent."""
+        self.g_cost = g_cost
+        self.parent = parent
+        self._queue_key = (self.g_cost + self.h_cost, self.g_cost, id(self))
+    
     def __lt__(self, other: 'PathNode') -> bool:
-        """Compare nodes for priority queue ordering."""
-        # Primary sort by f_cost
-        if self.f_cost != other.f_cost:
-            return self.f_cost < other.f_cost
-        # If f_costs are equal, prefer lower h_cost
-        # (this makes the path prefer nodes closer to the goal)
-        if self.h_cost != other.h_cost:
-            return self.h_cost < other.h_cost
-        # If both f_cost and h_cost are equal, prefer lower g_cost
-        # (this means preferring shorter paths)
-        return self.g_cost < other.g_cost
+        """
+        Compare nodes for priority queue ordering.
+        Sort by (f_cost, g_cost, id) to ensure stable sorting and
+        prefer paths that have made more progress (higher g_cost).
+        """
+        return self._queue_key < other._queue_key
 
 class PathFinder:
     """A* pathfinding implementation for hex grid."""
@@ -73,22 +76,24 @@ class PathFinder:
             return None
 
         # Initialize open and closed sets
-        open_nodes: List[PathNode] = []
-        open_cells: Set[HexCell] = set()  # For faster membership testing
+        open_set: List[PathNode] = []
+        open_dict: Dict[HexCell, PathNode] = {}
         closed_set: Set[HexCell] = set()
         
         # Create start node and add to open set
         start_node = PathNode(start, g_cost=0, h_cost=self._heuristic(start, end))
-        heapq.heappush(open_nodes, start_node)
-        open_cells.add(start)
+        heapq.heappush(open_set, start_node)
+        open_dict[start] = start_node
         
-        # Track all nodes for backtracking
-        all_nodes: Dict[HexCell, PathNode] = {start: start_node}
-        
-        while open_nodes:
-            current_node = heapq.heappop(open_nodes)
+        while open_set:
+            current_node = heapq.heappop(open_set)
             current_cell = current_node.cell
-            open_cells.remove(current_cell)
+            
+            # Skip if we've found a better path to this cell
+            if current_cell in open_dict and open_dict[current_cell] != current_node:
+                continue
+            
+            del open_dict[current_cell]
             
             if current_cell == end:
                 return self._reconstruct_path(current_node)
@@ -111,25 +116,23 @@ class PathFinder:
                 if tentative_g_cost > max_cost:
                     continue
                 
-                if neighbor not in all_nodes:
+                if neighbor in open_dict:
+                    neighbor_node = open_dict[neighbor]
+                    if tentative_g_cost < neighbor_node.g_cost:
+                        # Found a better path - update the node
+                        neighbor_node.update(tentative_g_cost, current_node)
+                        # Re-add to queue
+                        heapq.heappush(open_set, neighbor_node)
+                else:
+                    # Create new node
                     neighbor_node = PathNode(
                         neighbor,
                         g_cost=tentative_g_cost,
                         h_cost=self._heuristic(neighbor, end),
                         parent=current_node
                     )
-                    all_nodes[neighbor] = neighbor_node
-                    heapq.heappush(open_nodes, neighbor_node)
-                    open_cells.add(neighbor)
-                else:
-                    neighbor_node = all_nodes[neighbor]
-                    if tentative_g_cost < neighbor_node.g_cost:
-                        # Found a better path - update the node
-                        neighbor_node.g_cost = tentative_g_cost
-                        neighbor_node.parent = current_node
-                        if neighbor not in open_cells:
-                            heapq.heappush(open_nodes, neighbor_node)
-                            open_cells.add(neighbor)
+                    open_dict[neighbor] = neighbor_node
+                    heapq.heappush(open_set, neighbor_node)
         
         return None  # No path found
 
