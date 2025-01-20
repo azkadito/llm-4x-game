@@ -67,11 +67,22 @@ class TestHexGrid:
 
     def test_get_cell(self, grid):
         """Test cell retrieval."""
+        # Test getting existing cell
         cell = grid.get_cell(0, 0, 0)
         assert isinstance(cell, HexCell)
         assert cell.coord.x == 0
         assert cell.coord.y == 0
         assert cell.coord.z == 0
+        
+        # Test getting non-existent cell
+        assert grid.get_cell(5, -2, -3) is None
+        
+        # Test getting cells at grid boundary
+        assert grid.get_cell(2, -2, 0) is not None  # Should exist
+        assert grid.get_cell(3, -3, 0) is None     # Should not exist
+        
+        # Test getting cells with invalid coordinates
+        assert grid.get_cell(1, 1, 1) is None  # Sum != 0
 
     def test_get_nonexistent_cell(self, grid):
         """Test retrieving a cell that doesn't exist."""
@@ -105,23 +116,16 @@ class TestHexGrid:
         # Each cell should be adjacent to the next
         for i in range(len(line) - 1):
             assert grid.distance(line[i], line[i + 1]) == 1
-
-    def test_get_line_outside_grid(self, grid):
-        """Test line drawing that goes outside the grid."""
-        # Create a path that would go outside the grid's radius
-        start = grid.get_cell(0, 0, 0)
-        end = grid.get_cell(2, -2, 0)
-        
-        # Get cells along theoretical line to point outside grid
-        line = grid.get_line(start, end)
-        
-        # Line should only contain cells that exist in the grid
-        for cell in line:
-            assert isinstance(cell, HexCell)
-            coord = cell.coord
-            assert abs(coord.x) <= grid.radius
-            assert abs(coord.y) <= grid.radius
-            assert abs(coord.z) <= grid.radius
+            
+        # Test edge cases for get_line
+        # Line that would go outside grid
+        far_end = grid.get_cell(2, -2, 0)
+        line = grid.get_line(start, far_end)
+        # Each cell in line should be in grid
+        assert all(isinstance(c, HexCell) for c in line)
+        assert all(abs(c.coord.x) <= grid.radius for c in line)
+        assert all(abs(c.coord.y) <= grid.radius for c in line)
+        assert all(abs(c.coord.z) <= grid.radius for c in line)
 
     def test_find_path(self, grid):
         """Test pathfinding between cells."""
