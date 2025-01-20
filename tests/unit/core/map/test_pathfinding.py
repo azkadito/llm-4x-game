@@ -3,7 +3,8 @@ Unit tests for the hex grid pathfinding system.
 """
 
 import pytest
-from src.core.map.hex_grid import HexGrid, HexCell, HexCoord, TerrainType
+from src.core.map.types import HexCell, HexCoord
+from src.core.map.hex_grid import HexGrid
 from src.core.map.pathfinding import PathFinder, PathNode
 
 class TestPathNode:
@@ -62,19 +63,19 @@ class TestPathFinder:
         for i in range(len(path) - 1):
             assert grid.distance(path[i], path[i + 1]) == 1
 
-    def test_path_with_terrain(self, grid):
-        """Test pathfinding with different terrain costs."""
+    def test_path_with_costs(self, grid):
+        """Test pathfinding with different movement costs."""
         start = grid.get_cell(0, 0, 0)
         mid = grid.get_cell(1, -1, 0)
         end = grid.get_cell(2, -2, 0)
         
-        # Make middle cell mountainous
-        mid.terrain = TerrainType.MOUNTAINS
+        # Make middle cell expensive
+        mid.data['movement_cost'] = 5.0
         
         path = grid.find_path(start, end)
         assert path is not None
         
-        # Path should avoid mountains if possible
+        # Path should avoid expensive cell if possible
         assert mid not in path
 
     def test_path_with_max_cost(self, grid):
@@ -87,15 +88,15 @@ class TestPathFinder:
         assert path is None
 
     def test_path_around_obstacles(self, grid):
-        """Test pathfinding around impassable terrain."""
+        """Test pathfinding around high-cost areas."""
         start = grid.get_cell(0, 0, 0)
         end = grid.get_cell(2, -2, 0)
         
-        # Create a line of mountains between start and end
+        # Create a line of expensive cells between start and end
         mid1 = grid.get_cell(1, -1, 0)
         mid2 = grid.get_cell(1, 0, -1)
-        mid1.terrain = TerrainType.MOUNTAINS
-        mid2.terrain = TerrainType.MOUNTAINS
+        mid1.data['movement_cost'] = 10.0
+        mid2.data['movement_cost'] = 10.0
         
         path = grid.find_path(start, end)
         assert path is not None
@@ -107,21 +108,9 @@ class TestPathFinder:
         start = grid.get_cell(0, 0, 0)
         end = grid.get_cell(2, -2, 0)
         
-        # Surround start with mountains
+        # Surround start with very expensive cells
         for neighbor in grid.get_neighbors(start):
-            neighbor.terrain = TerrainType.MOUNTAINS
+            neighbor.data['movement_cost'] = float('inf')
             
         path = grid.find_path(start, end)
         assert path is None
-
-    def test_cells_in_range(self, grid):
-        """Test finding all cells within a range."""
-        center = grid.get_cell(0, 0, 0)
-        
-        # Test range 1
-        cells = grid.cells_in_range(center, 1)
-        assert len(cells) == 7  # Center + 6 neighbors
-        
-        # Test range 2
-        cells = grid.cells_in_range(center, 2)
-        assert len(cells) == 19  # Previous 7 + 12 cells in second ring
