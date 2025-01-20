@@ -128,20 +128,32 @@ class TestPathFinder:
 
     def test_path_reevaluation(self, grid):
         """Test path reevaluation when a better path is found."""
-        start = grid.get_cell(0, 0, 0)
-        end = grid.get_cell(2, -2, 0)
-        
-        # Create a scenario where the initial path estimate 
-        # needs to be updated when a better path is found
-        mid1 = grid.get_cell(1, -1, 0)
-        mid2 = grid.get_cell(1, -2, 1)
-        
-        # Make first path slightly expensive
-        mid1.data['movement_cost'] = 2.0
-        
-        # Make second path initially look expensive but actually be better
-        mid2.data['movement_cost'] = 1.5
-        
+        start = grid.get_cell(0, 0, 0)  # (0,0,0)
+        mid1 = grid.get_cell(1, -1, 0)  # Direct route
+        mid2 = grid.get_cell(1, 0, -1)  # Alternative route
+        mid3 = grid.get_cell(2, -1, -1) # Common point
+        end = grid.get_cell(2, -2, 0)   # Destination
+
+        # Set up movement costs to force reevaluation
+        # Make direct route look good initially but be expensive overall
+        mid1.data['movement_cost'] = 1.0  # Looks good...
+        mid3.data['movement_cost'] = 5.0  # ...but then gets expensive
+
+        # Make alternative route look worse initially but be better overall
+        mid2.data['movement_cost'] = 2.0  # Looks worse...
+        # ...but then uses common path with default cost 1.0
+
         path = grid.find_path(start, end)
         assert path is not None
-        assert mid2 in path  # Should choose the actually cheaper path
+
+        # Calculate total costs of both potential paths
+        direct_cost = sum(cell.movement_cost for cell in [mid1, mid3])
+        alternative_cost = sum(cell.movement_cost for cell in [mid2])
+
+        print(f"\nDebug path info:")
+        print(f"Path found: {[(c.coord.x, c.coord.y, c.coord.z) for c in path]}")
+        print(f"Direct route cost: {direct_cost}")
+        print(f"Alternative route cost: {alternative_cost}")
+
+        # Should choose the cheaper path
+        assert mid2 in path
