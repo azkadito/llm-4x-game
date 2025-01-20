@@ -29,6 +29,17 @@ class TestPathNode:
         node = PathNode(cell, g_cost=5, h_cost=3)
         assert node.f_cost == 8
 
+    def test_node_comparison_different_f_costs(self):
+        """Test node comparison with different f_costs."""
+        cell = HexCell(HexCoord(0, 0, 0))
+        
+        # Create nodes with very different f_costs
+        node1 = PathNode(cell, g_cost=1, h_cost=1)  # f_cost = 2
+        node2 = PathNode(cell, g_cost=10, h_cost=10)  # f_cost = 20
+        
+        assert node1 < node2  # Lower f_cost should be chosen first
+        assert not (node2 < node1)  # Higher f_cost should not be chosen first
+
 class TestPathFinder:
     """Test pathfinding functionality."""
 
@@ -108,9 +119,29 @@ class TestPathFinder:
         start = grid.get_cell(0, 0, 0)
         end = grid.get_cell(2, -2, 0)
         
-        # Surround start with very expensive cells
+        # Surround start with infinite cost cells
         for neighbor in grid.get_neighbors(start):
             neighbor.data['movement_cost'] = float('inf')
             
         path = grid.find_path(start, end)
         assert path is None
+
+    def test_path_reevaluation(self, grid):
+        """Test path reevaluation when a better path is found."""
+        start = grid.get_cell(0, 0, 0)
+        end = grid.get_cell(2, -2, 0)
+        
+        # Create a scenario where the initial path estimate 
+        # needs to be updated when a better path is found
+        mid1 = grid.get_cell(1, -1, 0)
+        mid2 = grid.get_cell(1, -2, 1)
+        
+        # Make first path slightly expensive
+        mid1.data['movement_cost'] = 2.0
+        
+        # Make second path initially look expensive but actually be better
+        mid2.data['movement_cost'] = 1.5
+        
+        path = grid.find_path(start, end)
+        assert path is not None
+        assert mid2 in path  # Should choose the actually cheaper path
