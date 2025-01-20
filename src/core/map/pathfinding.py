@@ -60,6 +60,11 @@ class PathFinder:
         Returns:
             List of cells forming the path, or None if no path found
         """
+        # Early exit if start or end has infinite cost
+        if self._default_movement_cost(start) == float('inf') or \
+           self._default_movement_cost(end) == float('inf'):
+            return None
+
         # Initialize open and closed sets
         open_set: List[PathNode] = []
         closed_set: Set[HexCell] = set()
@@ -86,6 +91,11 @@ class PathFinder:
                     continue
                     
                 movement_cost = self._default_movement_cost(neighbor)
+                
+                # Skip impassable cells
+                if movement_cost == float('inf'):
+                    continue
+                    
                 tentative_g_cost = current_node.g_cost + movement_cost
                 
                 if tentative_g_cost > max_cost:
