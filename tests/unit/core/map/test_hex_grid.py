@@ -46,6 +46,12 @@ class TestHexCell:
         cell.data['movement_cost'] = 2.0
         assert cell.movement_cost == 2.0
 
+    def test_cell_comparison_with_non_cell(self, cell):
+        """Test comparing cell with non-cell types."""
+        assert cell != "not a cell"
+        assert cell != 42
+        assert cell != None
+
 class TestHexGrid:
     """Test hex grid functionality."""
 
@@ -66,6 +72,12 @@ class TestHexGrid:
         assert cell.coord.x == 0
         assert cell.coord.y == 0
         assert cell.coord.z == 0
+
+    def test_get_nonexistent_cell(self, grid):
+        """Test retrieving a cell that doesn't exist."""
+        # Try to get a cell outside the grid's radius
+        cell = grid.get_cell(5, -2, -3)
+        assert cell is None
 
     def test_get_neighbors(self, grid):
         """Test neighbor retrieval."""
@@ -93,6 +105,23 @@ class TestHexGrid:
         # Each cell should be adjacent to the next
         for i in range(len(line) - 1):
             assert grid.distance(line[i], line[i + 1]) == 1
+
+    def test_get_line_outside_grid(self, grid):
+        """Test line drawing that goes outside the grid."""
+        # Create a path that would go outside the grid's radius
+        start = grid.get_cell(0, 0, 0)
+        end = grid.get_cell(2, -2, 0)
+        
+        # Get cells along theoretical line to point outside grid
+        line = grid.get_line(start, end)
+        
+        # Line should only contain cells that exist in the grid
+        for cell in line:
+            assert isinstance(cell, HexCell)
+            coord = cell.coord
+            assert abs(coord.x) <= grid.radius
+            assert abs(coord.y) <= grid.radius
+            assert abs(coord.z) <= grid.radius
 
     def test_find_path(self, grid):
         """Test pathfinding between cells."""
