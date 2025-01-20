@@ -8,6 +8,7 @@ from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from enum import Enum
 import math
+from .pathfinding import PathFinder
 
 class TerrainType(Enum):
     """Terrain types for hex cells."""
@@ -65,6 +66,16 @@ class HexCell:
         }
         return terrain_costs[self.terrain]
 
+    def __eq__(self, other):
+        """Compare cells based on coordinates."""
+        if not isinstance(other, HexCell):
+            return NotImplemented
+        return self.coord == other.coord
+
+    def __hash__(self):
+        """Make cells hashable based on coordinates."""
+        return hash(self.coord)
+
 class HexGrid:
     """Manages the hex grid map."""
     
@@ -79,6 +90,7 @@ class HexGrid:
         self.radius = radius
         self.cells: Dict[HexCoord, HexCell] = {}
         self._generate_grid()
+        self.pathfinder = PathFinder()
 
     def _generate_grid(self):
         """Generate the initial grid of cells."""
@@ -133,8 +145,39 @@ class HexGrid:
                 results.append(self.cells[coord])
         return results
 
-    def find_path(self, start: HexCell, end: HexCell) -> Optional[List[HexCell]]:
-        """Find a path between two cells using A* algorithm."""
-        # TODO: Implement A* pathfinding
-        # This will be implemented in a separate PR
-        pass
+    def find_path(self, start: HexCell, end: HexCell, max_cost: float = float('inf')) -> Optional[List[HexCell]]:
+        """
+        Find a path between two cells using A* algorithm.
+        
+        Args:
+            start: Starting hex cell
+            end: Target hex cell
+            max_cost: Maximum total path cost (optional)
+            
+        Returns:
+            List of cells forming the path, or None if no path found
+        """
+        return self.pathfinder.find_path(
+            start=start,
+            end=end,
+            get_neighbors=self.get_neighbors,
+            max_cost=max_cost
+        )
+
+    def cells_in_range(self, center: HexCell, max_distance: int) -> List[HexCell]:
+        """Get all cells within a certain distance of a center cell."""
+        result = []
+        for q in range(-max_distance, max_distance + 1):
+            r1 = max(-max_distance, -q - max_distance)
+            r2 = min(max_distance, -q + max_distance)
+            for r in range(r1, r2 + 1):
+                s = -q - r
+                if abs(q) + abs(r) + abs(s) <= 2 * max_distance:
+                    coord = HexCoord(
+                        center.coord.x + q,
+                        center.coord.y + r,
+                        center.coord.z + s
+                    )
+                    if coord in self.cells:
+                        result.append(self.cells[coord])
+        return result
