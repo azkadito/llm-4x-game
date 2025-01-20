@@ -2,12 +2,17 @@
 
 ## Original Project Vision
 - 2D 4X strategy game with LLM-powered dynamic storytelling
-- Single player focused
-- Key innovation: "zoom in" feature where players can experience different narrative perspectives within their empire (e.g., from street vendor to prime minister)
+- Single player focused (multiplayer explicitly descoped for initial version)
+- Key innovation: "zoom in" feature where players can experience different narrative perspectives within their empire:
+  - Range from street vendor to prime minister perspectives
+  - Both observational and interactive events
+  - Could be brief events or extended dialogues/sequences
+  - Narrative choices can affect gameplay
 - LLMs will be used for:
   - Narrative generation
   - Enemy AI
   - Dynamic event creation
+  - Must understand game context (resources, demographics, relationships, etc.)
 
 ## Development Context
 - Developer background:
@@ -17,6 +22,17 @@
 - Time constraints:
   - Target development time: ~1 year
   - Part-time development
+
+## Technical Exploration History
+- Considered but ruled out:
+  - Building upon FreeCiv (decided fresh start better aligns with goals)
+  - 3D development (would require 2-3x development time)
+  - Complex multiplayer features (focusing on core experience first)
+- Explored LLM integration options:
+  - Local model deployment
+  - API-based integration
+  - Hybrid approach (pre-generation + live generation)
+- Investigated different game engines and frameworks
 
 ## Key Decisions Made
 
@@ -44,17 +60,13 @@
      - Not too complex for first project
      - Good community resources available
 
-### Technical Approach
-- Modular architecture with clear separation of concerns
+### Development Philosophy
 - Focus on core systems first
-- Test-driven development
-- Scalability considerations for map size and unit count
-- Asynchronous LLM processing
-
-## Next Steps
-- Implement core hex grid system
-- Design and implement basic state management
-- Create initial testing framework
+- Keep extensibility in mind for future features
+- Modular architecture with clear separation of concerns
+- Test-driven development from the start
+- Scalability considerations built into initial design
+- Asynchronous LLM processing to handle generation latency
 
 ## Repository Structure
 The project is organized into the following structure:
@@ -80,6 +92,7 @@ The project is organized into the following structure:
 - Single player only for initial version
 - Must consider performance implications of LLM integration
 - Need to manage scope to fit one-year timeline
+- Initial focus on core mechanics before advanced features
 
 ## Open Questions & Future Decisions
 1. State Management System
@@ -90,6 +103,11 @@ The project is organized into the following structure:
    - Map size limits
    - Unit count optimization
    - Performance targets
+
+3. LLM Integration Details
+   - Local vs API vs Hybrid approach
+   - Content caching strategy
+   - Fallback mechanisms
 
 ## Resources & References
 - README.md: Basic project information and setup
