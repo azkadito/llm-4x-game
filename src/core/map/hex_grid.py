@@ -69,12 +69,32 @@ class HexGrid:
         results = []
         for i in range(N + 1):
             t = i / N
-            x = round(start.coord.x * (1-t) + end.coord.x * t)
-            y = round(start.coord.y * (1-t) + end.coord.y * t)
-            z = round(start.coord.z * (1-t) + end.coord.z * t)
-            coord = HexCoord(x, y, z)
+            # Lerp coordinates
+            x = start.coord.x + (end.coord.x - start.coord.x) * t
+            y = start.coord.y + (end.coord.y - start.coord.y) * t
+            z = start.coord.z + (end.coord.z - start.coord.z) * t
+            
+            # Round to nearest hex
+            rx = round(x)
+            ry = round(y)
+            rz = round(z)
+            
+            # Fix rounding errors
+            x_diff = abs(rx - x)
+            y_diff = abs(ry - y)
+            z_diff = abs(rz - z)
+            
+            if x_diff > y_diff and x_diff > z_diff:
+                rx = -ry - rz
+            elif y_diff > z_diff:
+                ry = -rx - rz
+            else:
+                rz = -rx - ry
+            
+            coord = HexCoord(rx, ry, rz)
             if coord in self.cells:
                 results.append(self.cells[coord])
+        
         return results
 
     def find_path(self, start: HexCell, end: HexCell, max_cost: float = float('inf')) -> Optional[List[HexCell]]:
@@ -112,4 +132,3 @@ class HexGrid:
                     )
                     if coord in self.cells:
                         result.append(self.cells[coord])
-        return result
