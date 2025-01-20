@@ -132,3 +132,4 @@ class HexGrid:
                     )
                     if coord in self.cells:
                         result.append(self.cells[coord])
+        return result  # Added return statement here
