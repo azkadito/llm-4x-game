@@ -35,20 +35,26 @@ class HexGrid:
 
     def get_cell(self, x: int, y: int, z: int) -> Optional[HexCell]:
         """Get cell at specified coordinates."""
-        coord = HexCoord(x, y, z)
-        return self.cells.get(coord)
+        try:
+            coord = HexCoord(x, y, z)
+            return self.cells.get(coord)
+        except ValueError:
+            return None
 
     def get_neighbors(self, cell: HexCell) -> List[HexCell]:
         """Get all neighboring cells."""
         neighbors = []
         for dx, dy, dz in self.DIRECTIONS:
-            neighbor_coord = HexCoord(
-                cell.coord.x + dx,
-                cell.coord.y + dy,
-                cell.coord.z + dz
-            )
-            if neighbor_coord in self.cells:
-                neighbors.append(self.cells[neighbor_coord])
+            try:
+                neighbor_coord = HexCoord(
+                    cell.coord.x + dx,
+                    cell.coord.y + dy,
+                    cell.coord.z + dz
+                )
+                if neighbor_coord in self.cells:
+                    neighbors.append(self.cells[neighbor_coord])
+            except ValueError:
+                continue
         return neighbors
 
     @staticmethod
@@ -91,9 +97,12 @@ class HexGrid:
             else:
                 rz = -rx - ry
             
-            coord = HexCoord(rx, ry, rz)
-            if coord in self.cells:
-                results.append(self.cells[coord])
+            try:
+                coord = HexCoord(rx, ry, rz)
+                if coord in self.cells:
+                    results.append(self.cells[coord])
+            except ValueError:
+                continue
         
         return results
 
@@ -124,7 +133,7 @@ class HexGrid:
             r2 = min(max_distance, -q + max_distance)
             for r in range(r1, r2 + 1):
                 s = -q - r
-                if abs(q) + abs(r) + abs(s) <= 2 * max_distance:
+                try:
                     coord = HexCoord(
                         center.coord.x + q,
                         center.coord.y + r,
@@ -132,4 +141,6 @@ class HexGrid:
                     )
                     if coord in self.cells:
                         result.append(self.cells[coord])
-        return result  # Added return statement here
+                except ValueError:
+                    continue
+        return result
