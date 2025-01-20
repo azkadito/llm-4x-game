@@ -1,26 +1,9 @@
 """
-Common types used in the map system.
+Core types for the hex grid system.
 """
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, List, Optional
-
-class TerrainType(Enum):
-    """Terrain types for hex cells."""
-    PLAINS = "plains"
-    MOUNTAINS = "mountains"
-    WATER = "water"
-    FOREST = "forest"
-    DESERT = "desert"
-
-class ResourceType(Enum):
-    """Resource types that can appear in cells."""
-    NONE = "none"
-    IRON = "iron"
-    WOOD = "wood"
-    GOLD = "gold"
-    FOOD = "food"
+from typing import Dict, Any
 
 @dataclass
 class HexCoord:
@@ -43,24 +26,12 @@ class HexCell:
     
     def __init__(self, coord: HexCoord):
         self.coord = coord
-        self.terrain: TerrainType = TerrainType.PLAINS
-        self.resources: List[ResourceType] = []
-        self.owner: Optional[int] = None  # Player ID
-        self.improvements: List[str] = []
-        self.units: List[str] = []  # Unit IDs
-        self.visibility: Dict[int, bool] = {}  # Player ID -> visibility
+        self.data: Dict[str, Any] = {}  # Generic container for cell data
 
     @property
     def movement_cost(self) -> float:
-        """Calculate base movement cost for the cell."""
-        terrain_costs = {
-            TerrainType.PLAINS: 1.0,
-            TerrainType.MOUNTAINS: 2.0,
-            TerrainType.WATER: 1.5,
-            TerrainType.FOREST: 1.5,
-            TerrainType.DESERT: 1.2
-        }
-        return terrain_costs[self.terrain]
+        """Calculate movement cost for the cell."""
+        return self.data.get('movement_cost', 1.0)
 
     def __eq__(self, other):
         """Compare cells based on coordinates."""
